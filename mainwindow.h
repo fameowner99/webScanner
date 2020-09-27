@@ -2,8 +2,10 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include "WebScannerHandler.h"
 
-namespace Ui {
+namespace Ui
+{
 class MainWindow;
 }
 
@@ -16,7 +18,13 @@ public:
     ~MainWindow();
 
 private:
+    void initialize();
+    void setupConnections();
+
+private:
     Ui::MainWindow *ui;
+    WebScannerHandler mWebScanner;
+
 };
 
 #endif // MAINWINDOW_H

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
+    <width>803</width>
     <height>600</height>
    </rect>
   </property>
@@ -126,7 +126,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QLineEdit" name="threadsEdit"/>
+              <widget class="QSpinBox" name="threadsEdit"/>
              </item>
             </layout>
            </widget>
@@ -148,7 +148,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QLineEdit" name="maxURLEdit"/>
+              <widget class="QSpinBox" name="maxURLEdit"/>
              </item>
             </layout>
            </widget>
@@ -236,7 +236,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>803</width>
      <height>21</height>
     </rect>
    </property>
