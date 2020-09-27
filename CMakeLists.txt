@@ -19,7 +19,7 @@ set(project_sources
     mainwindow.cpp
     WebScannerHandler.cpp)
 
-find_package(Qt5 REQUIRED COMPONENTS Widgets Core GUI)
+find_package(Qt5 REQUIRED COMPONENTS Widgets Core GUI Network)
 
 qt5_wrap_ui(project_headers_wrapped ${project_ui})
 qt5_wrap_cpp(project_sources_moc ${project_headers})
@@ -30,4 +30,5 @@ target_link_libraries(${PROJECT_NAME}
 PRIVATE
 Qt5::Core
 Qt5::Widgets
-Qt5::Gui)
+Qt5::Gui
+Qt5::Network)

@@ -6,6 +6,9 @@
 
 #include <QString>
 #include <QObject>
+#include <QNetworkAccessManager>
+#include <unordered_map>
+#include <queue>
 
 struct ScanningConfiguration
 {
@@ -30,12 +33,17 @@ public:
 
 signals:
 	void signalFinished();
+	void signalReplyHandled();
 
 private:
-
+	void handleReply(const QString& reply, const QString& currentUrl);
 
 private:
 	ScanningConfiguration mConfig;
+	std::vector<QNetworkAccessManager*> mManagers;
+	std::unordered_map<std::string, bool> mVisitedURLs;
+	std::queue<std::string> mQueue;
+
 };
 
 #endif
