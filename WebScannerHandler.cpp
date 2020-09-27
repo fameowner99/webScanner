@@ -85,6 +85,9 @@ void WebScannerHandler::handleReply(const QString& reply, const QString &current
 
     bool isTextFound = str.find(mConfig.textToFind.toStdString()) != std::string::npos;
     mVisitedURLs[currentUrl.toStdString()] = isTextFound;
+    
+    mList.append({ currentUrl, URLStatus::TextFound });
+    emit signalListUpdated(mList);
 
     while (std::regex_search(str, url_match_result, url_regex))
     {

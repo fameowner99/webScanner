@@ -18,6 +18,16 @@ struct ScanningConfiguration
 	size_t	maxNumberOfScanningURLs;
 };
 
+enum class URLStatus
+{
+	TextFound,
+	TextNotFound,
+	Queue,
+	Scanning,
+	Error
+};
+
+
 class WebScannerHandler : public QObject
 {
 	Q_OBJECT
@@ -34,6 +44,7 @@ public:
 signals:
 	void signalFinished();
 	void signalReplyHandled();
+	void signalListUpdated(const QList<QPair<QString, URLStatus>> list);
 
 private:
 	void handleReply(const QString& reply, const QString& currentUrl);
@@ -43,7 +54,9 @@ private:
 	std::vector<QNetworkAccessManager*> mManagers;
 	std::unordered_map<std::string, bool> mVisitedURLs;
 	std::queue<std::string> mQueue;
+	QList<QPair<QString, URLStatus>> mList;
 
 };
+
 
 #endif

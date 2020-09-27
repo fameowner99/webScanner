@@ -16,6 +16,7 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+    void slotUpdateList(const QList<QPair<QString, URLStatus>> list);
 
 private:
     void initialize();

@@ -2,6 +2,8 @@
 #include "ui_mainwindow.h"
 #include <QStringListModel>
 #include <thread>
+#include "listitem.h"
+
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -11,14 +13,7 @@ MainWindow::MainWindow(QWidget *parent) :
     initialize();
     setupConnections();
 
-    auto model = new QStringListModel(this);
 
-    QStringList list;
-    list << "cats" << "dogs" << "rats";
-
-    model->setStringList(list);
-
-    ui->listView->setModel(model);
 }
 
 MainWindow::~MainWindow()
@@ -51,4 +46,19 @@ void MainWindow::setupConnections()
 
     connect(ui->stopButton, &QPushButton::clicked, &mWebScanner, &WebScannerHandler::stopScanning);
     connect(ui->pauseButton, &QPushButton::clicked, &mWebScanner, &WebScannerHandler::pauseScanning);
+    connect(&mWebScanner, &WebScannerHandler::signalListUpdated, this, &MainWindow::slotUpdateList);
+}
+
+void MainWindow::slotUpdateList(const QList<QPair<QString, URLStatus>> list)
+{
+    for (const auto& item : list)
+    {
+        listItem* myListItem = new listItem(item);
+
+        QListWidgetItem* defaultItem = new QListWidgetItem();
+        defaultItem->setSizeHint(QSize(0, 50));
+        ui->listWidget->addItem(defaultItem);
+        ui->listWidget->setItemWidget(defaultItem, myListItem);
+    }
+
 }

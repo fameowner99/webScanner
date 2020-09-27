@@ -8,16 +8,21 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 set(project_ui
-    mainwindow.ui)
+    mainwindow.ui
+    listitem.ui)
 
 set(project_headers
     mainwindow.h
-    WebScannerHandler.h)
+    WebScannerHandler.h
+    listitem.h
+    ListWidget.h)
 
 set(project_sources
     main.cpp
     mainwindow.cpp
-    WebScannerHandler.cpp)
+    WebScannerHandler.cpp
+    listitem.cpp
+    ListWidget.cpp)
 
 find_package(Qt5 REQUIRED COMPONENTS Widgets Core GUI Network)
 
