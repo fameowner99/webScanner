@@ -7,8 +7,8 @@
 #include <QString>
 #include <QObject>
 #include <QNetworkAccessManager>
-#include <unordered_map>
-#include <queue>
+#include <set>
+#include <deque>
 
 struct ScanningConfiguration
 {
@@ -48,12 +48,13 @@ signals:
 
 private:
 	void handleReply(const QString& reply, const QString& currentUrl);
+	void updateList();
 
 private:
 	ScanningConfiguration mConfig;
 	std::vector<QNetworkAccessManager*> mManagers;
-	std::unordered_map<std::string, bool> mVisitedURLs;
-	std::queue<std::string> mQueue;
+	std::set<std::string> mVisitedURLs;
+	std::deque<std::string> mDeque;
 	QList<QPair<QString, URLStatus>> mList;
 
 };

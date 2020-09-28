@@ -31,7 +31,7 @@ void MainWindow::initialize()
     ui->threadsEdit->setValue(1);
 
     ui->maxURLEdit->setMinimum(10);
-    ui->maxURLEdit->setValue(1000);
+    ui->maxURLEdit->setValue(10);
     ui->maxURLEdit->setMaximum(1000000);
 }
 
@@ -51,6 +51,7 @@ void MainWindow::setupConnections()
 
 void MainWindow::slotUpdateList(const QList<QPair<QString, URLStatus>> list)
 {
+    ui->listWidget->clear();
     for (const auto& item : list)
     {
         listItem* myListItem = new listItem(item);

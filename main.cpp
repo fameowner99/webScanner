@@ -8,6 +8,7 @@ int main(int argc, char *argv[])
 
     MainWindow mainWindow;
 
+    mainWindow.setWindowTitle("Web Scanner");
     mainWindow.show();
 
     return app.exec();

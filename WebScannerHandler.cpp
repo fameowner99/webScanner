@@ -12,7 +12,8 @@ WebScannerHandler::WebScannerHandler()
         this, [=](QNetworkReply* reply) {
             if (reply->error())
             {
-                qDebug() << reply->errorString();
+                mList.append({ reply->url().toString(), URLStatus::Error });
+                updateList();
                 emit signalReplyHandled();
                 return;
             }
@@ -35,8 +36,9 @@ void WebScannerHandler::setConfigurations(const ScanningConfiguration& aConfig)
 void WebScannerHandler::startScanning()
 {
 	std::cout << "START" << std::endl;;
-    mQueue = {};
+    mDeque = {};
     mVisitedURLs = {};
+    mList = {};
 
     mManagers[0]->get(QNetworkRequest(QUrl(mConfig.url)));
  
@@ -45,13 +47,13 @@ void WebScannerHandler::startScanning()
 
     auto connection = connect(this, &WebScannerHandler::signalReplyHandled, [&]
     {
-        if (mQueue.empty())
+        if (mDeque.empty())
         {
             loop.quit();
             return;
         }
-        const auto url = mQueue.front();
-        mQueue.pop();
+        const auto url = mDeque.front();
+        mDeque.pop_front();
         mManagers[0]->get(QNetworkRequest(QUrl(QString::fromStdString(url))));
     });
 
@@ -78,27 +80,44 @@ void WebScannerHandler::handleReply(const QString& reply, const QString &current
     // file for local test
     // std::regex url_regex(R"((file)://(.*)?)");
     std::regex url_regex(R"((http)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?)");
-
     std::smatch url_match_result;
-
     std::string str = reply.toStdString();
 
+    if (str.empty())
+    {
+        mList.append({ currentUrl, URLStatus::Error });
+        updateList();
+        return;
+    }
+    auto tmp = currentUrl.toStdString();
     bool isTextFound = str.find(mConfig.textToFind.toStdString()) != std::string::npos;
-    mVisitedURLs[currentUrl.toStdString()] = isTextFound;
-    
-    mList.append({ currentUrl, URLStatus::TextFound });
-    emit signalListUpdated(mList);
+    mList.append({ currentUrl, isTextFound ?  URLStatus::TextFound : URLStatus::TextNotFound });
+
+    updateList();
 
     while (std::regex_search(str, url_match_result, url_regex))
     {
         if (mVisitedURLs.size() < mConfig.maxNumberOfScanningURLs)
         {
-            mQueue.push(url_match_result.str());
-            mVisitedURLs[url_match_result.str()] = false;
-            std::cout << url_match_result.str() << std::endl;
+            if (mVisitedURLs.find(url_match_result.str()) == mVisitedURLs.end())
+            {
+                mDeque.push_back(url_match_result.str());
+                mVisitedURLs.insert(url_match_result.str());
+                std::cout << url_match_result.str() << std::endl;
+            }
             str = url_match_result.suffix();
         }
         else
             break;
     }
+}
+
+void WebScannerHandler::updateList()
+{
+    QList<QPair<QString, URLStatus>> list;
+    for (const auto& q : mDeque)
+        list.append({ QString::fromStdString(q) ,URLStatus::Queue });
+    list.append(mList);
+
+    emit signalListUpdated(list);
 }
