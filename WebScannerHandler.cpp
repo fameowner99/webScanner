@@ -1,29 +1,16 @@
 #include "WebScannerHandler.h"
 #include <iostream>
 #include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <regex>
-#include <QEventLoop>
 
+#include <QEventLoop>
+#include "AsyncProcessor.h"
+#include <future>
+#include "ButtonsState.h"
 WebScannerHandler::WebScannerHandler()
 {
-    mManagers.push_back(new QNetworkAccessManager());
-    QObject::connect(mManagers[0], &QNetworkAccessManager::finished,
-        this, [=](QNetworkReply* reply) {
-            if (reply->error())
-            {
-                mList.append({ reply->url().toString(), URLStatus::Error });
-                updateList();
-                emit signalReplyHandled();
-                return;
-            }
-            QString answer = reply->readAll();
-           
-            handleReply(answer, reply->url().toString());
+    qRegisterMetaType<QList<QPair<QString, URLStatus>>>("QList<QPair<QString,URLStatus>>");
+    qRegisterMetaType<ButtonsState>("ButtonsState");
 
-            emit signalReplyHandled();
-        }
-    );
 }
 
 WebScannerHandler::~WebScannerHandler() {}
@@ -36,80 +23,75 @@ void WebScannerHandler::setConfigurations(const ScanningConfiguration& aConfig)
 void WebScannerHandler::startScanning()
 {
 	std::cout << "START" << std::endl;;
-    mDeque = {};
-    mVisitedURLs = {};
-    mList = {};
-
-    mManagers[0]->get(QNetworkRequest(QUrl(mConfig.url)));
- 
+    mDeque.clear();
+    mVisitedURLs.clear();
+    mList.clear();
+    mDeque.push_back(mConfig.url.toStdString());
+    emit signalButtonsStatusChanged(ButtonsState::Running);
     
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
     QEventLoop loop;
 
-    auto connection = connect(this, &WebScannerHandler::signalReplyHandled, [&]
+
+    auto f = std::async(std::launch::async, [&]
     {
-        if (mDeque.empty())
+      
+        while (!mDeque.empty())
         {
-            loop.quit();
-            return;
+            QEventLoop pauseLoop;
+
+            connect(this, &WebScannerHandler::signalResume, [&pauseLoop] {pauseLoop.quit(); });
+            if (mIsPaused)
+                pauseLoop.exec();
+
+            AsyncProcessor ap(mConfig, mVisitedURLs, mDeque, mList);
+            std::vector<std::string> scanningUrls;
+
+            for (int i = 0; i < mConfig.maxNumberOfThreads; ++i)
+            {
+                if (mDeque.empty())
+                    break;
+
+                scanningUrls.push_back(mDeque.front());
+                mDeque.pop_front();
+            }
+
+            const auto foundURL = ap.process(scanningUrls);
+            mDeque.insert(mDeque.end(), foundURL.begin(), foundURL.end());
+            updateList();
         }
-        const auto url = mDeque.front();
-        mDeque.pop_front();
-        mManagers[0]->get(QNetworkRequest(QUrl(QString::fromStdString(url))));
+        emit signalFinished();
+        updateList();
     });
 
+    connect(this, &WebScannerHandler::signalFinished, [&loop] {loop.quit(); });
     loop.exec();
 
-    disconnect(connection);
-
+    f.get();
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count() << "[s]" << std::endl;
     std::cout << "THE END!__________";
+
+    emit signalButtonsStatusChanged(ButtonsState::Finished);
+    mIsPaused = false;
 }
 
 void WebScannerHandler::stopScanning()
 {
 	std::cout << "STOP" << std::endl;;
+    if (mIsPaused)
+        emit signalResume();
+    mDeque.clear();
 }
 
 void WebScannerHandler::pauseScanning()
 {
 	std::cout << "PAUSE" << std::endl;
-}
-
-void WebScannerHandler::handleReply(const QString& reply, const QString &currentUrl)
-{
-    //std::regex url_regex(R"((http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?)");
-    // file for local test
-    // std::regex url_regex(R"((file)://(.*)?)");
-    std::regex url_regex(R"((http)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?)");
-    std::smatch url_match_result;
-    std::string str = reply.toStdString();
-
-    if (str.empty())
-    {
-        mList.append({ currentUrl, URLStatus::Error });
-        updateList();
-        return;
-    }
-    auto tmp = currentUrl.toStdString();
-    bool isTextFound = str.find(mConfig.textToFind.toStdString()) != std::string::npos;
-    mList.append({ currentUrl, isTextFound ?  URLStatus::TextFound : URLStatus::TextNotFound });
-
-    updateList();
-
-    while (std::regex_search(str, url_match_result, url_regex))
-    {
-        if (mVisitedURLs.size() < mConfig.maxNumberOfScanningURLs)
-        {
-            if (mVisitedURLs.find(url_match_result.str()) == mVisitedURLs.end())
-            {
-                mDeque.push_back(url_match_result.str());
-                mVisitedURLs.insert(url_match_result.str());
-                std::cout << url_match_result.str() << std::endl;
-            }
-            str = url_match_result.suffix();
-        }
-        else
-            break;
-    }
+    mIsPaused = !mIsPaused;
+    
+    if (!mIsPaused)
+        emit signalResume();
 }
 
 void WebScannerHandler::updateList()
@@ -118,6 +100,5 @@ void WebScannerHandler::updateList()
     for (const auto& q : mDeque)
         list.append({ QString::fromStdString(q) ,URLStatus::Queue });
     list.append(mList);
-
     emit signalListUpdated(list);
 }

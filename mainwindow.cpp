@@ -3,6 +3,7 @@
 #include <QStringListModel>
 #include <thread>
 #include "listitem.h"
+#include "ButtonsState.h"
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -33,6 +34,9 @@ void MainWindow::initialize()
     ui->maxURLEdit->setMinimum(10);
     ui->maxURLEdit->setValue(10);
     ui->maxURLEdit->setMaximum(1000000);
+
+    ui->pauseButton->setEnabled(false);
+    ui->stopButton->setEnabled(false);
 }
 
 void MainWindow::setupConnections()
@@ -47,6 +51,22 @@ void MainWindow::setupConnections()
     connect(ui->stopButton, &QPushButton::clicked, &mWebScanner, &WebScannerHandler::stopScanning);
     connect(ui->pauseButton, &QPushButton::clicked, &mWebScanner, &WebScannerHandler::pauseScanning);
     connect(&mWebScanner, &WebScannerHandler::signalListUpdated, this, &MainWindow::slotUpdateList);
+    connect(&mWebScanner, &WebScannerHandler::signalButtonsStatusChanged, [this](ButtonsState state)
+        {
+            switch (state)
+            {
+            case ButtonsState::Running:
+            case ButtonsState::Paused:
+                ui->startButton->setEnabled(false); ui->stopButton->setEnabled(true); ui->pauseButton->setEnabled(true);
+                break;
+            case ButtonsState::Finished:
+                ui->startButton->setEnabled(true); ui->stopButton->setEnabled(false); ui->pauseButton->setEnabled(false);
+                break;
+            default:
+                break;
+            }
+        });
+
 }
 
 void MainWindow::slotUpdateList(const QList<QPair<QString, URLStatus>> list)

@@ -15,14 +15,19 @@ set(project_headers
     mainwindow.h
     WebScannerHandler.h
     listitem.h
-    ListWidget.h)
+    ListWidget.h
+    AsyncProcessor.h
+    URLStatus.h
+    ScanningConfiguration.h
+    ButtonsState.h)
 
 set(project_sources
     main.cpp
     mainwindow.cpp
     WebScannerHandler.cpp
     listitem.cpp
-    ListWidget.cpp)
+    ListWidget.cpp
+    AsyncProcessor.cpp)
 
 find_package(Qt5 REQUIRED COMPONENTS Widgets Core GUI Network)
 
