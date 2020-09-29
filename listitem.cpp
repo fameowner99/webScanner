@@ -33,6 +33,8 @@ listItem::listItem(QPair<QString, URLStatus> data, QWidget *parent) :
             ui->statusLabel->setProperty("color", "red");
             return "Not Found";
         }
+
+        return "Unknown";
     };
    
     ui->statusLabel->setText(getMessageAndSetColor(data.second));

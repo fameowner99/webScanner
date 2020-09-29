@@ -8,7 +8,8 @@ enum class URLStatus
 	TextNotFound,
 	Queue,
 	Scanning,
-	Error
+	Error,
+	Unknown
 };
 
 #endif

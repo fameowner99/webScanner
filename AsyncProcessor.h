@@ -16,7 +16,8 @@
 
 struct ProcessedInfo
 {
-	ProcessedInfo() {}
+	ProcessedInfo()
+		: currentStatus(URLStatus::Unknown) {}
 	ProcessedInfo(const std::vector<std::string>& aFoundURL, const QString &aCurrentURL, const URLStatus aCurrentStatus)
 		: foundURLs(aFoundURL)
 		, currentURL(aCurrentURL)
@@ -58,7 +59,7 @@ private:
 
 private:
 	ScanningConfiguration &mConfig;
-	std::set<std::string> &mVisitedURLs;
+	std::set<std::string> &mUniqueURLs;
 	std::deque<std::string> &mDeque;
 	QList<QPair<QString, URLStatus>> &mList;
 	std::mutex mMutex;

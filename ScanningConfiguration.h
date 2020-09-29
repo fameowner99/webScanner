@@ -6,8 +6,8 @@ struct ScanningConfiguration
 {
 	QString url;
 	QString textToFind;
-	size_t	maxNumberOfThreads;
-	size_t	maxNumberOfScanningURLs;
+	size_t	maxNumberOfThreads = 0;
+	size_t	maxNumberOfScanningURLs = 0;
 };
 
 

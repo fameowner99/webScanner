@@ -13,9 +13,11 @@ AsyncProcessor::AsyncProcessor(ScanningConfiguration& aConfig,
     std::deque<std::string>& aDeque,
     QList<QPair<QString, URLStatus>>& aList)
     : mConfig(aConfig)
-    , mVisitedURLs(aVisitedURLs)
+    , mUniqueURLs(aVisitedURLs)
     , mDeque(aDeque)
     , mList(aList) {}
+
+
 
 std::vector<std::string> AsyncProcessor::process(std::vector<std::string> urls)
 {
@@ -39,7 +41,20 @@ std::vector<std::string> AsyncProcessor::process(std::vector<std::string> urls)
         const auto currentProccedData = future.get();
         const auto currentURLs = currentProccedData.foundURLs;
         mList.append({currentProccedData.currentURL, currentProccedData.currentStatus});
-		foundURLs.insert(foundURLs.end(), currentURLs.begin(), currentURLs.end());
+
+        for (const auto& foundURL : currentURLs)
+        {
+            if (mUniqueURLs.size() < mConfig.maxNumberOfScanningURLs)
+            {
+                if (mUniqueURLs.find(foundURL) == mUniqueURLs.end())
+                {
+                    mUniqueURLs.insert(foundURL);
+                    foundURLs.push_back(foundURL);
+                }
+            }
+            else
+                break;
+        }
 	}
 
 	return foundURLs;
@@ -86,19 +101,8 @@ ProcessedInfo  AsyncProcessor::handleReply(const QString& reply, const QString& 
 
     while (std::regex_search(str, url_match_result, url_regex))
     {
-        if (mVisitedURLs.size() < mConfig.maxNumberOfScanningURLs)
-        {
-            if (mVisitedURLs.find(url_match_result.str()) == mVisitedURLs.end())
-            {
-                foundURLs.push_back(url_match_result.str());
-               // std::lock_guard<std::mutex> lck(mMutex);
-                mVisitedURLs.insert(url_match_result.str());
-                std::cout << url_match_result.str() << std::endl;
-            }
-            str = url_match_result.suffix();
-        }
-        else
-            break;
+        foundURLs.push_back(url_match_result.str());
+        str = url_match_result.suffix();
     }
 
     emit signalThreadFinished();

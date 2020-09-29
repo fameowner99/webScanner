@@ -39,7 +39,7 @@ private:
 
 private:
 	ScanningConfiguration mConfig;
-	std::set<std::string> mVisitedURLs;
+	std::set<std::string> mUniqueURLs;
 	std::deque<std::string> mDeque;
 	QList<QPair<QString, URLStatus>> mList;
 	bool mIsPaused = false;

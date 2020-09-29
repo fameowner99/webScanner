@@ -24,9 +24,10 @@ void WebScannerHandler::startScanning()
 {
 	std::cout << "START" << std::endl;;
     mDeque.clear();
-    mVisitedURLs.clear();
+    mUniqueURLs.clear();
     mList.clear();
     mDeque.push_back(mConfig.url.toStdString());
+    mUniqueURLs.insert(mConfig.url.toStdString());
     emit signalButtonsStatusChanged(ButtonsState::Running);
     
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
@@ -45,7 +46,7 @@ void WebScannerHandler::startScanning()
             if (mIsPaused)
                 pauseLoop.exec();
 
-            AsyncProcessor ap(mConfig, mVisitedURLs, mDeque, mList);
+            AsyncProcessor ap(mConfig, mUniqueURLs, mDeque, mList);
             std::vector<std::string> scanningUrls;
 
             for (int i = 0; i < mConfig.maxNumberOfThreads; ++i)
