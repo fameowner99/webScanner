@@ -2,7 +2,8 @@
 #define LISTITEM_H
 
 #include <QWidget>
-#include "WebScannerHandler.h"
+#include "URLStatus.h"
+
 namespace Ui {
 class listItem;
 }

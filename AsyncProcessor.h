@@ -13,7 +13,6 @@
 #include "URLStatus.h"
 #include <mutex>
 
-
 struct ProcessedInfo
 {
 	ProcessedInfo()
@@ -28,7 +27,6 @@ struct ProcessedInfo
 	URLStatus currentStatus;
 
 };
-
 
 class AsyncProcessorException : public std::exception
 {

@@ -17,13 +17,10 @@ AsyncProcessor::AsyncProcessor(ScanningConfiguration& aConfig,
     , mDeque(aDeque)
     , mList(aList) {}
 
-
+AsyncProcessor::~AsyncProcessor() {}
 
 std::vector<std::string> AsyncProcessor::process(std::vector<std::string> urls)
 {
-	if (urls.size() > std::thread::hardware_concurrency())
-		throw AsyncProcessorException("Wrong number of tasks");
-
 	std::vector<std::future<ProcessedInfo>> futures;
 	std::vector<std::string> foundURLs;
 
@@ -31,9 +28,9 @@ std::vector<std::string> AsyncProcessor::process(std::vector<std::string> urls)
         futures.push_back(std::async(std::launch::async, [this, &url] {return processor(QString::fromStdString(url)); }));
 
     QEventLoop loop;
-    int counter = 1;
+    int workCounter = 1;
 
-    connect(this, &AsyncProcessor::signalThreadFinished, [&] {if (counter++ == urls.size()) loop.quit(); });
+    connect(this, &AsyncProcessor::signalThreadFinished, [&] {if (workCounter++ == urls.size()) loop.quit(); });
 
     loop.exec();
 	for (auto &future : futures)
@@ -41,7 +38,7 @@ std::vector<std::string> AsyncProcessor::process(std::vector<std::string> urls)
         const auto currentProccedData = future.get();
         const auto currentURLs = currentProccedData.foundURLs;
         mList.append({currentProccedData.currentURL, currentProccedData.currentStatus});
-
+        std::cout << currentProccedData.currentURL.toStdString() << std::endl;
         for (const auto& foundURL : currentURLs)
         {
             if (mUniqueURLs.size() < mConfig.maxNumberOfScanningURLs)
@@ -49,7 +46,7 @@ std::vector<std::string> AsyncProcessor::process(std::vector<std::string> urls)
                 if (mUniqueURLs.find(foundURL) == mUniqueURLs.end())
                 {
                     mUniqueURLs.insert(foundURL);
-                    foundURLs.push_back(foundURL);
+                    foundURLs.push_back(foundURL);              
                 }
             }
             else
@@ -60,7 +57,6 @@ std::vector<std::string> AsyncProcessor::process(std::vector<std::string> urls)
 	return foundURLs;
 }
 
-
 ProcessedInfo AsyncProcessor::processor(const QString url)
 {
     QNetworkAccessManager* manager = new QNetworkAccessManager();
@@ -70,6 +66,18 @@ ProcessedInfo AsyncProcessor::processor(const QString url)
     QObject::connect(manager, &QNetworkAccessManager::finished,
         this, [&loop, &answer, &currentURL](QNetworkReply* reply)
         {
+            // if redirect than replay answer is empty
+            // to fix this need to do second get request
+            // error if redirect for now.
+             if (reply->error() == QNetworkReply::NoError)
+             {
+                 int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+                 if (statusCode == 301)
+                 {
+                     QUrl redirectUrl = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
+                 }
+             }
+
             answer = reply->readAll();
             currentURL = reply->url().toString();
             loop.quit();
@@ -94,6 +102,7 @@ ProcessedInfo  AsyncProcessor::handleReply(const QString& reply, const QString& 
     if (str.empty())
     {
         emit signalThreadFinished();
+        //std::cout << currentUrl.toStdString() <<  " - replay is empty! Redirection possible." << std::endl;
         return { {}, currentUrl, URLStatus::Error };
     }
 
@@ -108,5 +117,3 @@ ProcessedInfo  AsyncProcessor::handleReply(const QString& reply, const QString& 
     emit signalThreadFinished();
     return { foundURLs, currentUrl, isTextFound ? URLStatus::TextFound : URLStatus::TextNotFound };
 }
-
-AsyncProcessor::~AsyncProcessor() {}

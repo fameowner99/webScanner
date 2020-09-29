@@ -6,10 +6,9 @@
 
 #include <QString>
 #include <QObject>
-#include <chrono>
-
 #include <set>
 #include <deque>
+
 #include "URLStatus.h"
 #include "ScanningConfiguration.h"
 #include "ButtonsState.h"
@@ -35,11 +34,11 @@ signals:
 
 private:
 	void handleReply(const QString& reply, const QString& currentUrl);
-	void updateList();
+	void updateList(std::vector<std::string> scanningUrls);
 
 private:
 	ScanningConfiguration mConfig;
-	std::set<std::string> mUniqueURLs;
+	std::set<std::string> mUniqueURLs; // to save unique sites without repetitions
 	std::deque<std::string> mDeque;
 	QList<QPair<QString, URLStatus>> mList;
 	bool mIsPaused = false;

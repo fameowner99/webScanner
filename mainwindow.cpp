@@ -13,8 +13,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     initialize();
     setupConnections();
-
-
 }
 
 MainWindow::~MainWindow()
@@ -28,11 +26,11 @@ void MainWindow::initialize()
     ui->findTextEdit->setText(QString::fromStdWString(L"nokia"));
     
     ui->threadsEdit->setMinimum(1);
-    ui->threadsEdit->setMaximum(std::thread::hardware_concurrency());
-    ui->threadsEdit->setValue(1);
+    ui->threadsEdit->setMaximum(8);
+    ui->threadsEdit->setValue(4);
 
     ui->maxURLEdit->setMinimum(10);
-    ui->maxURLEdit->setValue(10);
+    ui->maxURLEdit->setValue(20);
     ui->maxURLEdit->setMaximum(1000000);
 
     ui->pauseButton->setEnabled(false);
@@ -56,8 +54,10 @@ void MainWindow::setupConnections()
             switch (state)
             {
             case ButtonsState::Running:
-            case ButtonsState::Paused:
                 ui->startButton->setEnabled(false); ui->stopButton->setEnabled(true); ui->pauseButton->setEnabled(true);
+                break;
+            case ButtonsState::Paused:
+                ui->startButton->setEnabled(false); ui->stopButton->setEnabled(false); ui->pauseButton->setEnabled(true);
                 break;
             case ButtonsState::Finished:
                 ui->startButton->setEnabled(true); ui->stopButton->setEnabled(false); ui->pauseButton->setEnabled(false);
@@ -66,7 +66,6 @@ void MainWindow::setupConnections()
                 break;
             }
         });
-
 }
 
 void MainWindow::slotUpdateList(const QList<QPair<QString, URLStatus>> list)
